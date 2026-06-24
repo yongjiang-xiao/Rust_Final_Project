@@ -1,0 +1,8 @@
+Database Transaction
+
+A transaction groups several database operations into one logical unit. The ACID
+properties are atomicity, consistency, isolation, and durability.
+
+Atomicity means all operations succeed or all operations are rolled back.
+Isolation prevents concurrent transactions from interfering with each other.
+Durability means committed data should survive system failures.

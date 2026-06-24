@@ -1,0 +1,8 @@
+SQL Basic
+
+SQL is a language for querying and updating relational databases. SELECT reads
+rows from tables, WHERE filters rows, and ORDER BY controls result ordering.
+
+Indexes can improve query speed by avoiding full table scans. A database index
+and a text inverted index share the idea of building extra structures to speed
+up lookup.
