@@ -9,9 +9,9 @@ use crate::{
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub enum QueryMode {
-    // Any 对应 OR 语义：命中任意一个正向关键词即可进入候选结果。
+    // 任意匹配模式对应逻辑或语义：命中任意一个正向关键词即可进入候选结果。
     Any,
-    // All 对应 AND 语义：必须命中全部正向关键词。
+    // 全部匹配模式对应逻辑与语义：必须命中全部正向关键词。
     All,
 }
 
@@ -44,14 +44,14 @@ pub fn parse_query<T: Tokenizer>(query: &str, tokenizer: &T) -> Result<ParsedQue
         return Err(AppError::EmptyQuery);
     }
 
-    // BTreeSet 用来去重并保持固定顺序，便于测试和结果展示。
+    // 有序集合用来去重并保持固定顺序，便于测试和结果展示。
     let mut positives = BTreeSet::new();
     let mut excluded = BTreeSet::new();
     let mut saw_and = false;
     let mut saw_or = false;
 
     for part in query.split_whitespace() {
-        // AND/OR 作为查询模式标记，不作为普通关键词参与分词。
+        // 逻辑与/逻辑或作为查询模式标记，不作为普通关键词参与分词。
         if part.eq_ignore_ascii_case("AND") {
             saw_and = true;
             continue;
@@ -62,7 +62,7 @@ pub fn parse_query<T: Tokenizer>(query: &str, tokenizer: &T) -> Result<ParsedQue
         }
 
         if let Some(excluded_part) = part.strip_prefix('-') {
-            // 以 '-' 开头的词进入排除集合，例如 rust -trait。
+            // 以 '-' 开头的词进入排除集合，例如查询“rust -trait”。
             add_tokens(&mut excluded, excluded_part, tokenizer);
         } else {
             add_tokens(&mut positives, part, tokenizer);
@@ -76,7 +76,7 @@ pub fn parse_query<T: Tokenizer>(query: &str, tokenizer: &T) -> Result<ParsedQue
     let mode = if saw_and && !saw_or {
         QueryMode::All
     } else {
-        // 默认使用 OR；如果同时出现 AND 和 OR，也退回 OR，避免规则冲突。
+        // 默认使用逻辑或；如果同时出现逻辑与和逻辑或，也退回逻辑或，避免规则冲突。
         QueryMode::Any
     };
 
@@ -89,7 +89,7 @@ pub fn parse_query<T: Tokenizer>(query: &str, tokenizer: &T) -> Result<ParsedQue
 }
 
 fn add_tokens<T: Tokenizer>(target: &mut BTreeSet<String>, text: &str, tokenizer: &T) {
-    // 查询词也走同一套 tokenizer，保证“建索引时怎么切，查询时也怎么切”。
+    // 查询词也走同一套分词器，保证“建索引时怎么切，查询时也怎么切”。
     target.extend(tokenizer.tokenize(text));
 }
 

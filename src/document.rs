@@ -86,7 +86,7 @@ pub fn extract_title(path: &Path, content: &str) -> String {
         return title;
     }
 
-    // TXT 或没有一级标题的 Markdown 使用文件名作为标题。
+    // 文本文件或没有一级标题的 Markdown 文件使用文件名作为标题。
     path.file_stem()
         .and_then(|stem| stem.to_str())
         .unwrap_or("Untitled")

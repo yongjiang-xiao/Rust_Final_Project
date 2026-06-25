@@ -60,7 +60,7 @@ pub fn direct_search<T: Tokenizer>(
                 .iter()
                 .all(|term| counts.contains_key(term))
         {
-            // ALL 模式对应用户输入 AND，要求所有正向关键词都命中。
+            // 全部匹配模式对应用户输入的逻辑与查询，要求所有正向关键词都命中。
             continue;
         }
 
@@ -86,7 +86,7 @@ pub fn direct_search<T: Tokenizer>(
             .total_cmp(&left.score)
             .then_with(|| left.path.cmp(&right.path))
     });
-    // 只保留用户需要展示的前 top 条，减少命令行输出噪声。
+    // 只保留用户需要展示的前若干条结果，减少命令行输出噪声。
     results.truncate(options.top);
 
     Ok(results)

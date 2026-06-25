@@ -4,7 +4,7 @@ pub type Result<T> = std::result::Result<T, AppError>;
 
 #[derive(Debug, Error)]
 pub enum AppError {
-    // 统一错误类型让各模块可以用 ? 传播错误，main 入口只需要处理一种 Result。
+    // 统一错误类型让各模块可以用 ? 传播错误，程序入口只需要处理一种结果类型。
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 

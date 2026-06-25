@@ -17,7 +17,7 @@ impl RankerKind {
 
 #[derive(Debug, Clone, Copy)]
 pub struct ScoreInput {
-    // 排序器只接收打分所需的统计量，不直接依赖 SearchIndex，便于测试和替换算法。
+    // 排序器只接收打分所需的统计量，不直接依赖搜索索引，便于测试和替换算法。
     pub total_docs: usize,
     pub document_frequency: usize,
     pub term_frequency: usize,
@@ -26,7 +26,7 @@ pub struct ScoreInput {
 }
 
 pub trait Ranker {
-    // Ranker trait 把“搜索流程”和“具体排序算法”解耦。
+    // 排序器接口把“搜索流程”和“具体排序算法”解耦。
     fn name(&self) -> &'static str;
     fn score(&self, input: ScoreInput) -> f64;
 }
@@ -76,7 +76,7 @@ impl Ranker for Bm25Ranker {
         let term_frequency = input.term_frequency as f64;
         let document_length = input.document_length as f64;
         let average_document_length = input.average_document_length.max(1.0);
-        // BM25 在 TF-IDF 的基础上增加词频饱和和文档长度归一化。
+        // BM25 在词频和逆文档频率的基础上增加词频饱和和文档长度归一化。
         let idf = (1.0 + (total_docs - document_frequency + 0.5) / (document_frequency + 0.5)).ln();
         let length_factor = 1.0 - self.b + self.b * (document_length / average_document_length);
         // k1 控制词频增长的饱和速度，b 控制文档长度对得分的影响程度。

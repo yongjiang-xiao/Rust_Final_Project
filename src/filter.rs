@@ -39,7 +39,7 @@ impl PathFilter {
 }
 
 fn normalize_path_filter(value: &str) -> String {
-    // 将 Windows 反斜杠转换为 /，使同一条过滤规则在不同系统上表现一致。
+    // 将系统路径中的反斜杠转换为 /，使同一条过滤规则在不同系统上表现一致。
     value
         .trim()
         .trim_matches('/')

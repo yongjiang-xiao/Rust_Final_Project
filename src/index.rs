@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{document::Document, tokenizer::Tokenizer};
 
-// Posting 表示某个词在一篇文档中的索引信息，是倒排索引的基本单元。
+// 倒排项（Posting）表示某个词在一篇文档中的索引信息，是倒排索引的基本单元。
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Posting {
     pub doc_id: usize,
@@ -15,7 +15,7 @@ pub struct Posting {
 // 倒排索引结构：由“词项”快速定位到包含该词的文档列表。
 pub type InvertedIndex = BTreeMap<String, Vec<Posting>>;
 
-// SearchIndex 是持久化到 .rns/index.json 的核心数据结构。
+// 搜索索引（SearchIndex）是持久化到 .rns/index.json 的核心数据结构。
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SearchIndex {
     pub documents: Vec<Document>,
@@ -25,7 +25,7 @@ pub struct SearchIndex {
 }
 
 pub fn build_index<T: Tokenizer>(documents: Vec<Document>, tokenizer: &T) -> SearchIndex {
-    // 构建阶段先用 HashMap 收集“词项 -> 文档 -> 位置列表”，便于累计同一文档内的词频。
+    // 构建阶段先用哈希表收集“词项 -> 文档 -> 位置列表”，便于累计同一文档内的词频。
     let mut builders: BTreeMap<String, HashMap<usize, Vec<usize>>> = BTreeMap::new();
 
     for document in &documents {
@@ -46,7 +46,7 @@ pub fn build_index<T: Tokenizer>(documents: Vec<Document>, tokenizer: &T) -> Sea
     let inverted_index = builders
         .into_iter()
         .map(|(term, doc_positions)| {
-            // 将临时结构压缩成 Posting 列表，term_freq 可直接由位置数量得到。
+            // 将临时结构压缩成倒排项列表，词频可直接由位置数量得到。
             let mut postings: Vec<Posting> = doc_positions
                 .into_iter()
                 .map(|(doc_id, positions)| Posting {
@@ -55,7 +55,7 @@ pub fn build_index<T: Tokenizer>(documents: Vec<Document>, tokenizer: &T) -> Sea
                     positions,
                 })
                 .collect();
-            // 按 doc_id 排序后，索引文件和测试结果更稳定。
+            // 按文档编号排序后，索引文件和测试结果更稳定。
             postings.sort_by_key(|posting| posting.doc_id);
             (term, postings)
         })

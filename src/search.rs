@@ -45,7 +45,7 @@ impl SearchOptions {
 
 #[derive(Debug, Default)]
 struct SearchAccumulator {
-    // 同一篇文档可能命中多个查询词，先在 accumulator 中累加分数和解释信息。
+    // 同一篇文档可能命中多个查询词，先在累加器中汇总分数和解释信息。
     score: f64,
     matched_terms: BTreeSet<String>,
     term_explanations: BTreeMap<String, TermExplanation>,
@@ -65,10 +65,10 @@ where
     let parsed_query = parse_query(query, tokenizer)?;
     let mut accumulators: BTreeMap<usize, SearchAccumulator> = BTreeMap::new();
     let average_document_length = index.average_document_length();
-    // 排除词先转换成文档集合，后续遍历 postings 时可以快速跳过。
+    // 排除词先转换成文档集合，后续遍历倒排项时可以快速跳过。
     let excluded_doc_ids = excluded_doc_ids(index, &parsed_query.excluded_terms);
 
-    // 倒排索引只遍历命中查询词的 postings，避免每次搜索重新扫描所有文档。
+    // 倒排索引只遍历命中查询词的倒排项，避免每次搜索重新扫描所有文档。
     for term in &parsed_query.positive_terms {
         let Some(postings) = index.inverted_index.get(term) else {
             continue;
@@ -87,7 +87,7 @@ where
                 continue;
             }
 
-            // Ranker trait 屏蔽 TF-IDF/BM25 差异，搜索流程只依赖统一打分接口。
+            // 排序器接口屏蔽不同算法的差异，搜索流程只依赖统一打分接口。
             let score = ranker.score(ScoreInput {
                 total_docs: index.total_docs,
                 document_frequency,
@@ -113,9 +113,9 @@ where
     }
 
     let mut results = Vec::with_capacity(accumulators.len());
-    // 第二阶段把候选文档转换成可展示的 SearchResult，包括标题命中、摘要和解释信息。
+    // 第二阶段把候选文档转换成可展示的搜索结果，包括标题命中、摘要和解释信息。
     for (doc_id, accumulator) in accumulators {
-        // AND 查询要求候选文档命中所有正向查询词；默认 OR 查询不做该限制。
+        // 逻辑与查询要求候选文档命中所有正向查询词；默认逻辑或查询不做该限制。
         if parsed_query.requires_all_terms()
             && !has_all_required_terms(&accumulator.matched_terms, &parsed_query.positive_terms)
         {
@@ -131,7 +131,7 @@ where
             let score = accumulator.score * title_boost_multiplier;
             let snippet = make_snippet(&document.content, query, &matched_terms, 120);
             let term_explanations = accumulator.term_explanations.into_values().collect();
-            // explain 输出复用这里记录的中间分数，避免展示结果和真实排序逻辑不一致。
+            // 评分解释输出复用这里记录的中间分数，避免展示结果和真实排序逻辑不一致。
             let explanation = ScoreExplanation {
                 query_mode: parsed_query.mode.label().to_string(),
                 excluded_terms: parsed_query.excluded_terms.clone(),
@@ -161,7 +161,7 @@ where
             .total_cmp(&left.score)
             .then_with(|| left.path.cmp(&right.path))
     });
-    // top 参数只影响最终展示数量，不影响索引构建和候选文档打分。
+    // 结果数量参数只影响最终展示数量，不影响索引构建和候选文档打分。
     results.truncate(options.top);
 
     Ok(results)

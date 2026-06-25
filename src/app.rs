@@ -16,7 +16,7 @@ use crate::{
 
 pub fn run(cli: Cli) -> Result<()> {
     let tokenizer = SimpleTokenizer;
-    // CLI 入口只负责分发命令，具体逻辑分别放到 run_index、run_search 等函数中。
+    // 命令行入口只负责分发命令，具体逻辑分别放到索引、搜索等业务函数中。
     match cli.command {
         Commands::Index { dir } => run_index(&dir, &tokenizer),
         Commands::Search {
@@ -91,7 +91,7 @@ fn run_search(
     let index = load_index(root)?;
     let path_filter = PathFilter::new(filter);
     let options = crate::search::SearchOptions::new(top, path_filter.clone(), title_boost);
-    // 根据命令行参数选择排序器，二者都通过 Ranker trait 进入同一套搜索流程。
+    // 根据命令行参数选择排序器，二者都通过统一的排序器接口进入同一套搜索流程。
     let results = match ranker {
         RankerKind::Tfidf => search_index(&index, query, tokenizer, &TfIdfRanker, &options)?,
         RankerKind::Bm25 => {

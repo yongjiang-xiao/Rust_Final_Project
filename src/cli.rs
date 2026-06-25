@@ -8,7 +8,7 @@ use crate::ranker::RankerKind;
 #[command(
     name = "rust-note-search",
     version,
-    about = "A local Markdown/TXT knowledge base search tool written in Rust"
+    about = "使用 Rust 实现的本地 Markdown/TXT 知识库搜索工具"
 )]
 pub struct Cli {
     #[command(subcommand)]
@@ -17,82 +17,83 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    /// Scan a knowledge base directory and build .rns/index.json.
+    /// 扫描知识库目录并构建 .rns/index.json 索引文件。
     Index {
-        /// Knowledge base directory.
+        /// 知识库目录。
         dir: PathBuf,
     },
 
-    /// Search from an existing index.
+    /// 基于已有索引执行搜索。
     Search {
-        /// Query words. Multiple words are joined with spaces.
+        /// 查询词；多个词会用空格拼接为完整查询表达式。
         #[arg(required = true, num_args = 1..)]
         query: Vec<String>,
 
-        /// Knowledge base directory containing .rns/index.json.
+        /// 包含 .rns/index.json 的知识库目录。
         #[arg(long, default_value = ".")]
         path: PathBuf,
 
-        /// Maximum number of results to show.
+        /// 最多显示的搜索结果数量。
         #[arg(long, default_value_t = 10)]
         top: usize,
 
-        /// Ranking algorithm used by indexed search.
+        /// 索引搜索使用的排序算法。
         #[arg(long, value_enum, default_value = "tfidf")]
         ranker: RankerKind,
 
-        /// Only return documents whose relative path matches this path or directory.
+        /// 只返回相对路径匹配该路径或目录关键词的文档。
         #[arg(long)]
         filter: Option<String>,
 
-        /// Score multiplier for documents whose title contains matched query terms.
+        /// 标题命中查询词时使用的得分加权倍数。
         #[arg(long, default_value_t = 1.5)]
         title_boost: f64,
 
-        /// Do not append this query to .rns/history.json.
+        /// 本次查询不追加到 .rns/history.json。
         #[arg(long)]
         no_history: bool,
 
-        /// Print score details for each result.
+        /// 输出每条结果的评分细节。
         #[arg(long)]
         explain: bool,
     },
 
-    /// Compare direct scan search with inverted-index search.
+    /// 对比直接全文扫描和倒排索引搜索方案。
     Compare {
-        /// Query words. Multiple words are joined with spaces.
+        /// 查询词；多个词会用空格拼接为完整查询表达式。
         #[arg(required = true, num_args = 1..)]
         query: Vec<String>,
 
-        /// Knowledge base directory.
+        /// 知识库目录。
         #[arg(long, default_value = ".")]
         path: PathBuf,
 
-        /// Maximum number of top results to show.
+        /// 每种方案最多保留的结果数量。
         #[arg(long, default_value_t = 5)]
         top: usize,
 
-        /// Only compare documents whose relative path matches this path or directory.
+        /// 只对比相对路径匹配该路径或目录关键词的文档。
         #[arg(long)]
         filter: Option<String>,
 
-        /// Score multiplier for documents whose title contains matched query terms.
+        /// 标题命中查询词时使用的得分加权倍数。
         #[arg(long, default_value_t = 1.5)]
         title_boost: f64,
     },
 
-    /// Show recent search history recorded under .rns/history.json.
+    /// 显示 .rns/history.json 中记录的最近搜索历史。
     History {
-        /// Knowledge base directory containing .rns/history.json.
+        /// 包含 .rns/history.json 的知识库目录。
         #[arg(long, default_value = ".")]
         path: PathBuf,
 
-        /// Maximum number of history entries to show.
+        /// 最多显示的历史记录条数。
         #[arg(long, default_value_t = 10)]
         limit: usize,
     },
 }
 
 pub fn join_query(query: &[String]) -> String {
+    // clap 会把多个查询片段收集到 Vec 中，这里还原为用户输入的完整查询表达式。
     query.join(" ")
 }
