@@ -6,7 +6,9 @@ use crate::{
     document::scan_documents,
     error::{AppError, Result},
     filter::PathFilter,
-    history::{HistoryEntry, append_history, load_history},
+    history::{
+        HistoryEntry, HistoryFilter, append_history, clear_history, filter_history, load_history,
+    },
     index::build_index,
     ranker::{Bm25Ranker, RankerKind, TfIdfRanker},
     search::{SearchResult, search_index},
@@ -53,7 +55,13 @@ pub fn run(cli: Cli) -> Result<()> {
             title_boost,
             &tokenizer,
         ),
-        Commands::History { path, limit } => run_history(&path, limit),
+        Commands::History {
+            path,
+            limit,
+            query,
+            ranker,
+            clear,
+        } => run_history(&path, limit, query, ranker, clear),
     }
 }
 
@@ -141,14 +149,39 @@ fn run_compare(
     Ok(())
 }
 
-fn run_history(root: &Path, limit: usize) -> Result<()> {
+fn run_history(
+    root: &Path,
+    limit: usize,
+    query: Option<String>,
+    ranker: Option<RankerKind>,
+    clear: bool,
+) -> Result<()> {
+    if clear {
+        match clear_history(root)? {
+            Some(path) => println!("History cleared: {}", path.display()),
+            None => println!("No search history found."),
+        }
+        return Ok(());
+    }
+
     let entries = load_history(root)?;
     if entries.is_empty() {
         println!("No search history found.");
         return Ok(());
     }
 
-    for entry in entries.iter().rev().take(limit) {
+    let filter = HistoryFilter::new(query, ranker.map(|ranker| ranker.label().to_string()));
+    let filtered_entries = filter_history(&entries, &filter);
+    if filtered_entries.is_empty() {
+        if filter.is_active() {
+            println!("No matching search history found.");
+        } else {
+            println!("No search history found.");
+        }
+        return Ok(());
+    }
+
+    for entry in filtered_entries.into_iter().rev().take(limit) {
         println!("Time: {}", entry.timestamp_epoch_secs);
         println!("Query: {}", entry.query);
         println!("Ranker: {}", entry.ranker);

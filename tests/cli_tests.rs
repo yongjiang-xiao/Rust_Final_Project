@@ -1,6 +1,7 @@
 use std::fs;
 
 use assert_cmd::Command;
+use predicates::prelude::PredicateBooleanExt;
 use predicates::str::contains;
 use tempfile::tempdir;
 
@@ -81,6 +82,167 @@ fn cli_search_supports_bm25_filter_and_history() {
         .success()
         .stdout(contains("Query: ownership"))
         .stdout(contains("Ranker: bm25"));
+}
+
+#[test]
+fn cli_history_filters_by_query_and_ranker() {
+    let temp = tempdir().expect("tempdir");
+    fs::write(
+        temp.path().join("rust.md"),
+        "# Rust Ownership\nRust ownership and borrowing.",
+    )
+    .expect("write rust note");
+    fs::write(
+        temp.path().join("data.md"),
+        "# Data Structure\nData structure and database index.",
+    )
+    .expect("write data note");
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args(["index", temp.path().to_str().expect("utf8 path")])
+        .assert()
+        .success();
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args([
+            "search",
+            "data",
+            "--path",
+            temp.path().to_str().expect("utf8 path"),
+        ])
+        .assert()
+        .success();
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args([
+            "search",
+            "data",
+            "--path",
+            temp.path().to_str().expect("utf8 path"),
+            "--ranker",
+            "bm25",
+        ])
+        .assert()
+        .success();
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args([
+            "search",
+            "ownership",
+            "--path",
+            temp.path().to_str().expect("utf8 path"),
+            "--ranker",
+            "bm25",
+        ])
+        .assert()
+        .success();
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args([
+            "history",
+            "--path",
+            temp.path().to_str().expect("utf8 path"),
+            "--query",
+            "data",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("Query: data"))
+        .stdout(contains("Query: ownership").not());
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args([
+            "history",
+            "--path",
+            temp.path().to_str().expect("utf8 path"),
+            "--ranker",
+            "tfidf",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("Ranker: tfidf"))
+        .stdout(contains("Ranker: bm25").not());
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args([
+            "history",
+            "--path",
+            temp.path().to_str().expect("utf8 path"),
+            "--query",
+            "data",
+            "--ranker",
+            "bm25",
+            "--limit",
+            "1",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("Query: data"))
+        .stdout(contains("Ranker: bm25"));
+}
+
+#[test]
+fn cli_history_clear_removes_saved_records() {
+    let temp = tempdir().expect("tempdir");
+    fs::write(temp.path().join("rust.md"), "# Rust\nRust ownership.").expect("write note");
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args(["index", temp.path().to_str().expect("utf8 path")])
+        .assert()
+        .success();
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args([
+            "search",
+            "ownership",
+            "--path",
+            temp.path().to_str().expect("utf8 path"),
+        ])
+        .assert()
+        .success();
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args([
+            "history",
+            "--path",
+            temp.path().to_str().expect("utf8 path"),
+        ])
+        .assert()
+        .success()
+        .stdout(contains("Query: ownership"));
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args([
+            "history",
+            "--path",
+            temp.path().to_str().expect("utf8 path"),
+            "--clear",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("History cleared:"));
+
+    Command::cargo_bin("rust-note-search")
+        .expect("binary")
+        .args([
+            "history",
+            "--path",
+            temp.path().to_str().expect("utf8 path"),
+        ])
+        .assert()
+        .success()
+        .stdout(contains("No search history found."));
 }
 
 #[test]

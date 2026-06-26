@@ -14,8 +14,8 @@
 - 支持默认 OR、显式 `AND`、显式 `OR`、`-exclude` 排除词查询语法。
 - 支持 `--filter` 按路径或目录过滤搜索结果。
 - 支持 `--explain` 输出评分解释，包括词频、文档频率、文档长度和标题加权。
-- 默认记录搜索历史，可通过 `--no-history` 关闭记录。
-- 提供搜索历史和三种搜索方案对比功能。
+- 默认记录搜索历史，可通过 `--no-history` 关闭记录，并支持按查询词、排序器过滤历史或清空历史。
+- 提供搜索历史管理和三种搜索方案对比功能。
 
 ## 项目结构
 
@@ -115,6 +115,9 @@ cargo run -- search data --path examples/knowledge_base
 | `--top <数量>` | `search` | 限制搜索结果显示数量，例如 `--top 1` 只显示 1 条结果 |
 | `--top <数量>` | `compare` | 限制方案对比时保留的结果数量，默认是 5 |
 | `--limit <数量>` | `history` | 限制显示的搜索历史条数，例如 `--limit 3` |
+| `--query <关键词>` | `history` | 只显示查询内容包含该关键词的历史记录 |
+| `--ranker tfidf/bm25` | `history` | 只显示指定排序器产生的历史记录 |
+| `--clear` | `history` | 清空当前知识库目录下的搜索历史 |
 | `--no-history` | `search` | 本次搜索不写入 `.rns/history.json` |
 | `--ranker tfidf/bm25` | `search` | 指定排序器，默认是 `tfidf` |
 | `--filter <路径关键词>` | `search` / `compare` | 只返回路径匹配的文档 |
@@ -315,6 +318,30 @@ cargo run -- history --path <知识库目录> --limit <数量>
 
 ```powershell
 cargo run -- history --path examples/knowledge_base --limit 3
+```
+
+按查询关键词过滤历史：
+
+```powershell
+cargo run -- history --path examples/knowledge_base --query data
+```
+
+按排序器过滤历史：
+
+```powershell
+cargo run -- history --path examples/knowledge_base --ranker bm25
+```
+
+同时按查询关键词和排序器过滤：
+
+```powershell
+cargo run -- history --path examples/knowledge_base --query data --ranker tfidf --limit 3
+```
+
+清空当前知识库的搜索历史：
+
+```powershell
+cargo run -- history --path examples/knowledge_base --clear
 ```
 
 历史文件保存到：

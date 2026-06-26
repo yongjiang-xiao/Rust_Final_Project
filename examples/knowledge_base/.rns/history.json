@@ -1,0 +1,29 @@
+[
+  {
+    "timestamp_epoch_secs": 1782404439,
+    "query": "data",
+    "ranker": "tfidf",
+    "filter": "none",
+    "top": 1,
+    "result_count": 1,
+    "elapsed_micros": 2363
+  },
+  {
+    "timestamp_epoch_secs": 1782404445,
+    "query": "data",
+    "ranker": "bm25",
+    "filter": "none",
+    "top": 1,
+    "result_count": 1,
+    "elapsed_micros": 1496
+  },
+  {
+    "timestamp_epoch_secs": 1782404451,
+    "query": "ownership",
+    "ranker": "bm25",
+    "filter": "none",
+    "top": 1,
+    "result_count": 1,
+    "elapsed_micros": 1312
+  }
+]
