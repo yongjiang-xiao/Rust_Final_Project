@@ -90,6 +90,18 @@ pub enum Commands {
         /// 最多显示的历史记录条数。
         #[arg(long, default_value_t = 10)]
         limit: usize,
+
+        /// 只显示查询内容中包含该关键词的历史记录。
+        #[arg(long)]
+        query: Option<String>,
+
+        /// 只显示指定排序器产生的历史记录。
+        #[arg(long, value_enum)]
+        ranker: Option<RankerKind>,
+
+        /// 清空当前知识库目录下的搜索历史。
+        #[arg(long)]
+        clear: bool,
     },
 }
 
